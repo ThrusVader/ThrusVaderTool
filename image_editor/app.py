@@ -11,13 +11,21 @@ def load_icon(icon_name):
 
 # Variáveis globais
 global img, img_colors, img_tk, canvas, canvas_image, zoom_level, blocks_drawn, original_img, temp_img, backup_img
+# noinspection PyRedeclaration
 img = None
+# noinspection PyRedeclaration
 img_colors = []
+# noinspection PyRedeclaration
 canvas_image = None
+# noinspection PyRedeclaration
 zoom_level = 1.0
+# noinspection PyRedeclaration
 blocks_drawn = False
+# noinspection PyRedeclaration
 original_img = None
+# noinspection PyRedeclaration
 temp_img = None
+# noinspection PyRedeclaration
 backup_img = None
 
 # Criando a janela principal
@@ -80,11 +88,12 @@ zoom_out_button.bind("<Enter>", on_enter)
 zoom_out_button.bind("<Leave>", on_leave)
 
 # Criando um Canvas para exibir a imagem
+# noinspection PyRedeclaration
 canvas = tk.Canvas(root, bg="#323232", highlightthickness=0)
 canvas.pack(expand=True, fill="both")
 
 # Função para centralizar o retângulo
-def center_rectangle(event=None):
+def center_rectangle():
     canvas_width = canvas.winfo_width()
     canvas_height = canvas.winfo_height()
     rect_size = (700, 500)
@@ -95,6 +104,7 @@ rect = canvas.create_rectangle(0, 0, 700, 500, outline="white", width=2, fill="w
 center_rectangle()
 
 # Vinculando o redimensionamento da janela à função de centralização
+# noinspection PyTypeChecker
 canvas.bind("<Configure>", center_rectangle)
 
 def open_file():
@@ -124,8 +134,9 @@ def save_as():
     print("Save As")
 
 def adjust_brightness():
+    # noinspection PyUnboundLocalVariable
     if img is None:
-        messagebox.showerror("Erro", "A imagem não foi carregada corretamente.")
+        messagebox.showerror("Error", "A imagem não foi carregada corretamente.")
         return
 
     # Criar uma nova janela para ajuste de brilho
@@ -147,7 +158,9 @@ def adjust_brightness():
             original_img = temp_img.copy()  # Atualizar a imagem original com o brilho aplicado
             img = temp_img.copy()
         else:
+            # noinspection PyShadowingNames
             img_tk = ImageTk.PhotoImage(original_img)
+            # noinspection PyTypeChecker
             canvas.itemconfig(canvas_image, image=img_tk)
 
     def reset_brightness():
@@ -162,7 +175,7 @@ def adjust_brightness():
             canvas.itemconfig(canvas_image, image=img_tk)
 
     # Adicionar uma barra de porcentagem para ajustar o brilho
-    brightness_scale = Scale(brightness_window, from_=0.1, to=2.0, resolution=0.1, orient=HORIZONTAL, length=250, command=update_brightness)
+    brightness_scale = Scale(brightness_window, from_=0.0, to=2.0, resolution=0.1, orient=HORIZONTAL, length=250, command=update_brightness)
     brightness_scale.set(1.0)  # Valor inicial
     brightness_scale.pack(pady=10)
 
@@ -190,7 +203,7 @@ def sort_colors():
 
 def color_table(sorted_colors=None):
     if img is None:
-        messagebox.showerror("Erro", "A imagem não foi carregada corretamente.")
+        messagebox.showerror("Error", "A imagem não foi carregada corretamente.")
         return
 
     # Criar uma nova janela para a Tabela de Cores
@@ -201,6 +214,7 @@ def color_table(sorted_colors=None):
 
     # Criar um Canvas para desenhar os blocos de cores
     block_size = 20
+    # noinspection PyShadowingNames
     canvas: Canvas = tk.Canvas(color_window, width=16 * block_size, height=16 * block_size, bg="#414141", highlightthickness=0)
     canvas.pack(pady=10)
 
@@ -235,6 +249,7 @@ def change_rectangle_color():
     canvas.itemconfig(rect, fill=new_color)
 
 def center_image():
+    # noinspection PyTypeChecker
     canvas.coords(canvas_image, canvas.coords(rect)[0] + 350, canvas.coords(rect)[1] + 250)
 
 # Criando a barra de menu

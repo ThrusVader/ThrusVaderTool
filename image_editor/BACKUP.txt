@@ -145,7 +145,7 @@ def sort_colors():
 
 def color_table(sorted_colors=None):
     if img is None:
-        messagebox.showerror("Erro", "A imagem não foi carregada corretamente.")
+        messagebox.showerror("Error", "A imagem não foi carregada corretamente.")
         return
 
     # Criar uma nova janela para a Tabela de Cores
