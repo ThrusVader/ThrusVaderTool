@@ -1,9 +1,10 @@
 import os
 import tkinter as tk
-from tkinter import Menu, PhotoImage, filedialog, Toplevel, messagebox, Canvas, Scale, HORIZONTAL, Button, Label
-
-import datetime
+from tkinter import Menu, PhotoImage, filedialog, Toplevel, messagebox, Canvas, Scale, HORIZONTAL, Button, Label, ttk
 from PIL import Image, ImageTk, ImageEnhance
+import colorsys
+import numpy as np
+from datetime import datetime
 
 # Função para carregar ícones
 def load_icon(icon_name):
@@ -12,23 +13,19 @@ def load_icon(icon_name):
     return ImageTk.PhotoImage(Image.open(icon_path).resize((35, 35), Image.Resampling.LANCZOS))
 
 # Variáveis globais
-global img, img_colors, img_tk, canvas, canvas_image, zoom_level, blocks_drawn, original_img, temp_img, backup_img
-# noinspection PyRedeclaration
+global img, img_colors, img_tk, canvas, canvas_image, zoom_level, blocks_drawn, original_img, temp_img, backup_img, img_file_path, img_copy, hue_slider, saturation_slider
 img = None
-# noinspection PyRedeclaration
 img_colors = []
-# noinspection PyRedeclaration
 canvas_image = None
-# noinspection PyRedeclaration
 zoom_level = 1.0
-# noinspection PyRedeclaration
 blocks_drawn = False
-# noinspection PyRedeclaration
 original_img = None
-# noinspection PyRedeclaration
 temp_img = None
-# noinspection PyRedeclaration
 backup_img = None
+img_file_path = ""
+img_copy = None
+hue_slider = None
+saturation_slider = None
 
 # Criando a janela principal
 root = tk.Tk()
@@ -44,8 +41,6 @@ root.iconphoto(False, logo_image)
 # Criando um Frame para o menu lateral
 side_menu = tk.Frame(root, width=50, bg="#414141")
 side_menu.pack(side="left", fill="y")
-
-
 
 # Funções de Zoom In e Zoom Out
 def zoom_in():
@@ -92,7 +87,6 @@ zoom_out_button.bind("<Enter>", on_enter)
 zoom_out_button.bind("<Leave>", on_leave)
 
 # Criando um Canvas para exibir a imagem
-# noinspection PyRedeclaration
 canvas = tk.Canvas(root, bg="#323232", highlightthickness=0)
 canvas.pack(expand=True, fill="both")
 
@@ -101,7 +95,6 @@ def center_rectangle(event=None):
     canvas_width = canvas.winfo_width()
     canvas_height = canvas.winfo_height()
     rect_size = (700, 500)
-    # Ajusta a posição do retângulo
     canvas.coords(rect, (canvas_width / 2 - rect_size[0] / 2, canvas_height / 2 - rect_size[1] / 2,
                          canvas_width / 2 + rect_size[0] / 2, canvas_height / 2 + rect_size[1] / 2))
 
@@ -113,12 +106,10 @@ rect = canvas.create_rectangle(0, 0, 700, 500, outline="white", width=2, fill="w
 center_rectangle()
 
 # Vinculando o redimensionamento da janela à função de centralização
-# noinspection PyTypeChecker
 canvas.bind("<Configure>", center_rectangle)
 
-# Função para carregar a imagem
 def open_file():
-    global img, img_colors, img_tk, canvas_image, zoom_level, original_img, backup_img, img_file_path
+    global img, img_colors, img_tk, canvas_image, zoom_level, original_img, backup_img, img_file_path, img_copy
     filepath = filedialog.askopenfilename(filetypes=[("Image Files", "*.png;*.jpg;*.jpeg")])
     if filepath:
         img = Image.open(filepath)
@@ -126,16 +117,17 @@ def open_file():
         img = img.convert("RGBA")  # Usar RGBA para suportar transparência
         original_img = img.copy()  # Salvar a imagem original
         backup_img = img.copy()  # Criar um backup da imagem original
+        img_copy = img.copy()  # Faz uma cópia da imagem original para os ajustes
         img_colors = list(img.getdata())  # Salvar as cores da imagem
         img.thumbnail((700, 500), Image.Resampling.LANCZOS)  # Redimensionar a imagem mantendo a proporção
         img_tk = ImageTk.PhotoImage(img)
         canvas_image = canvas.create_image(canvas.winfo_width()/2, canvas.winfo_height()/2, image=img_tk)  # Centralizar a imagem no Canvas
         zoom_level = 1.0
         show_image_info(img_file_path)  # Atualizar as informações da imagem no rodapé
-        print("Image loaded successfully")
+        print("Image uploaded successfully")
 
 def update_image():
-    global img_tk, canvas_image
+    global img
     img_tk = ImageTk.PhotoImage(img)
     canvas.itemconfig(canvas_image, image=img_tk)
 
@@ -146,9 +138,8 @@ def save_as():
     print("Save As")
 
 def adjust_brightness():
-    # noinspection PyUnboundLocalVariable
     if img is None:
-        messagebox.showerror("Error", "A imagem não foi carregada corretamente.")
+        messagebox.showerror("Error", "The image did not load correctly.")
         return
 
     # Criar uma nova janela para ajuste de brilho
@@ -166,18 +157,16 @@ def adjust_brightness():
 
     def apply_brightness():
         global img, original_img, temp_img
-        if messagebox.askyesno("Confirmação", "Tem certeza que deseja aplicar essa alteração?"):
+        if messagebox.askyesno("Confirmação", "Are you sure you want to apply this change?"):
             original_img = temp_img.copy()  # Atualizar a imagem original com o brilho aplicado
             img = temp_img.copy()
         else:
-            # noinspection PyShadowingNames
             img_tk = ImageTk.PhotoImage(original_img)
-            # noinspection PyTypeChecker
             canvas.itemconfig(canvas_image, image=img_tk)
 
     def reset_brightness():
         global img, img_tk, canvas_image, original_img
-        if messagebox.askyesno("Confirmação", "Tem certeza que deseja voltar ao original?"):
+        if messagebox.askyesno("Confirmação", "Are you sure you want to go back to the original?"):
             img = original_img.copy()  # Restaurar a imagem original
             img_tk = ImageTk.PhotoImage(img)
             canvas.itemconfig(canvas_image, image=img_tk)
@@ -192,18 +181,80 @@ def adjust_brightness():
     brightness_scale.pack(pady=10)
 
     # Adicionar botões para aplicar e resetar o brilho
-    apply_button = Button(brightness_window, text="Aplicar Brilho", command=apply_brightness)
+    apply_button = Button(brightness_window, text="Apply Glow", command=apply_brightness)
     apply_button.pack(side="left", padx=10, pady=10)
 
-    reset_button = Button(brightness_window, text="Voltar ao Original", command=reset_brightness)
+    reset_button = Button(brightness_window, text="Return to Original", command=reset_brightness)
     reset_button.pack(side="right", padx=10, pady=10)
 
 def adjust_hue_saturation():
-    global img
-    img = img.convert("RGB")
-    img = img.point(lambda p: p * 1.1)  # Aumentar a saturação em 10%
-    update_image()
-    print("Hue and Saturation adjusted")
+    global img, img_tk, img_copy
+    # Aplicando matiz e saturação
+    img_hue_saturation = img_copy.convert("RGB")
+
+    # Pega o valor da matiz e saturação
+    hue_value = hue_slider.get()  # Valor da matiz (0 a 360)
+    saturation_value = saturation_slider.get() / 100.0  # Saturação (0 a 255 convertida para 0 a 1)
+
+    # Ajustar matiz e saturação
+    img_hue_saturation = adjust_image_hue(img_hue_saturation, hue_value)
+    img_hue_saturation = adjust_image_saturation(img_hue_saturation, saturation_value)
+
+    # Atualiza a imagem no canvas
+    img_tk = ImageTk.PhotoImage(img_hue_saturation)
+    canvas.itemconfig(canvas_image, image=img_tk)
+    print("Matiz e Saturação ajustados")
+
+def adjust_image_hue(image, hue_value):
+    # Converte a imagem para o modelo de cores HSV
+    hsv_image = image.convert("HSV")
+    hsv_data = np.array(hsv_image)
+
+    # Ajustar o valor da matiz
+    hue_shift = hue_value / 360.0  # Converte o valor de 0-360 para 0-1
+    hsv_data[..., 0] = (hsv_data[..., 0] + hue_shift * 255) % 255
+
+    # Converte de volta para RGB
+    adjusted_image = Image.fromarray(hsv_data, "HSV").convert("RGB")
+    return adjusted_image
+
+def adjust_image_saturation(image, saturation_value):
+    # Converte a imagem para o modelo de cores HSV
+    hsv_image = image.convert("HSV")
+    hsv_data = np.array(hsv_image)
+
+    # Ajustar o valor de saturação
+    hsv_data[..., 1] = np.clip(hsv_data[..., 1] * saturation_value, 0, 255)
+
+    # Converte de volta para RGB
+    adjusted_image = Image.fromarray(hsv_data, "HSV").convert("RGB")
+    return adjusted_image
+
+global hue_slider, saturation_slider
+
+def open_adjustment_window():
+    adjustment_window = tk.Toplevel(root)
+    adjustment_window.title("Ajustes de Matiz e Saturação")
+    adjustment_window.geometry("500x300")
+
+    # Barra de matiz (de 0 a 360)
+    hue_label = tk.Label(adjustment_window, text="Matiz")
+    hue_label.pack(pady=10)
+    hue_slider = tk.Scale(adjustment_window, from_=0, to=360, orient="horizontal", command=lambda val: adjust_hue_saturation())
+    hue_slider.pack(fill="x")
+
+    # Barra de saturação (de 0 a 255%)
+    saturation_label = tk.Label(adjustment_window, text="Saturação")
+    saturation_label.pack(pady=10)
+    saturation_slider = tk.Scale(adjustment_window, from_=0, to=255, orient="horizontal", command=lambda val: adjust_hue_saturation())
+    saturation_slider.pack(fill="x")
+
+    # Botão para aplicar ajustes
+    apply_button = tk.Button(adjustment_window, text="Apply Adjustments", command=adjust_hue_saturation)
+    apply_button.pack(pady=20)
+
+    # Atualizar ao abrir
+    adjust_hue_saturation()
 
 def sort_colors():
     global img_colors
@@ -215,7 +266,7 @@ def sort_colors():
 
 def color_table(sorted_colors=None):
     if img is None:
-        messagebox.showerror("Error", "A imagem não foi carregada corretamente.")
+        messagebox.showerror("Error", "The image did not load correctly.")
         return
 
     # Criar uma nova janela para a Tabela de Cores
@@ -226,8 +277,7 @@ def color_table(sorted_colors=None):
 
     # Criar um Canvas para desenhar os blocos de cores
     block_size = 20
-    # noinspection PyShadowingNames
-    canvas: Canvas = tk.Canvas(color_window, width=16 * block_size, height=16 * block_size, bg="#414141", highlightthickness=0)
+    canvas = tk.Canvas(color_window, width=16 * block_size, height=16 * block_size, bg="#414141", highlightthickness=0)
     canvas.pack(pady=10)
 
     # Se não for fornecido um conjunto de cores ordenadas, usar o original
@@ -248,8 +298,9 @@ def color_table(sorted_colors=None):
                 color_index += 1
 
     # Adicionando o botão para organizar as cores
-    sort_button = tk.Button(color_window, text="Organizar Cores", command=sort_colors)
+    sort_button = tk.Button(color_window, text="Organize Colors", command=sort_colors, bg="#414141", fg="white")
     sort_button.pack(pady=10)
+
 
 # Função de saída
 def exit_application():
@@ -261,14 +312,24 @@ def change_rectangle_color():
     canvas.itemconfig(rect, fill=new_color)
 
 def center_image():
-    # noinspection PyTypeChecker
     canvas.coords(canvas_image, canvas.coords(rect)[0] + 350, canvas.coords(rect)[1] + 250)
 
-# Função para exibir as informações da imagem no rodapé
+# Função para exibir informações da imagem no rodapé
 def show_image_info(file_path):
     if img is None:
         return
 
+    # Coletar informações da imagem
+    file_type = os.path.splitext(file_path)[1].upper()
+    file_stats = os.stat(file_path)
+    mod_time = datetime.fromtimestamp(file_stats.st_mtime).strftime('%Y-%m-%d %H:%M:%S')
+    num_colors = len(set(img_colors))
+    file_location = os.path.abspath(file_path)
+
+    # Exibir informações no rodapé
+    info_text = f"Type: {file_type}  |  Modified em: {mod_time}  |  Colors: {num_colors}  |  Location: {file_location}"
+    footer_label.config(text=info_text)
+    footer_label.place(relx=0.5, rely=1.0, anchor="s")
 
 
 # Adicionar o Label no rodapé da janela principal
