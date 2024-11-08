@@ -7,7 +7,7 @@ from PIL import Image, ImageTk, ImageEnhance
 def load_icon(icon_name):
     base_path = os.path.join(os.path.dirname(__file__), 'assets', 'img')
     icon_path = os.path.join(base_path, icon_name)
-    return ImageTk.PhotoImage(Image.open(icon_path).resize((35, 35), Image.LANCZOS))
+    return ImageTk.PhotoImage(Image.open(icon_path).resize((35, 35), Image.Resampling.LANCZOS))
 
 # Variáveis globais
 global img, img_colors, img_tk, canvas, canvas_image, zoom_level, blocks_drawn, original_img, temp_img, backup_img
@@ -49,7 +49,7 @@ def zoom_in():
     if img:
         zoom_level *= 1.2
         new_size = (int(min(img.width * zoom_level, 700)), int(min(img.height * zoom_level, 500)))
-        img_resized = img.resize(new_size, Image.NEAREST)
+        img_resized = img.resize(new_size, Image.Resampling.NEAREST)
         img_tk = ImageTk.PhotoImage(img_resized)
         canvas.itemconfig(canvas_image, image=img_tk)
         center_image()
@@ -60,7 +60,7 @@ def zoom_out():
     if img:
         zoom_level /= 1.2
         new_size = (int(min(img.width * zoom_level, 700)), int(min(img.height * zoom_level, 500)))
-        img_resized = img.resize(new_size, Image.NEAREST)
+        img_resized = img.resize(new_size, Image.Resampling.NEAREST)
         img_tk = ImageTk.PhotoImage(img_resized)
         canvas.itemconfig(canvas_image, image=img_tk)
         center_image()
@@ -120,8 +120,8 @@ def open_file():
         img = img.convert("RGBA")  # Usar RGBA para suportar transparência
         original_img = img.copy()  # Salvar a imagem original
         backup_img = img.copy()  # Criar um backup da imagem original
-        img_colors = list(img.getdata())
-        img.thumbnail((700, 500), Image.LANCZOS)  # Redimensionar a imagem mantendo a proporção
+        img_colors = list(img.getdata())  # Salvar as cores da imagem
+        img.thumbnail((700, 500), Image.Resampling.LANCZOS)  # Redimensionar a imagem mantendo a proporção
         img_tk = ImageTk.PhotoImage(img)
         canvas_image = canvas.create_image(canvas.winfo_width()/2, canvas.winfo_height()/2, image=img_tk)  # Centralizar a imagem no Canvas
         zoom_level = 1.0
