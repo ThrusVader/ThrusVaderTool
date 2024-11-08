@@ -1,6 +1,8 @@
 import os
 import tkinter as tk
-from tkinter import Menu, PhotoImage, filedialog, Toplevel, messagebox, Canvas, Scale, HORIZONTAL, Button
+from tkinter import Menu, PhotoImage, filedialog, Toplevel, messagebox, Canvas, Scale, HORIZONTAL, Button, Label
+
+import datetime
 from PIL import Image, ImageTk, ImageEnhance
 
 # Função para carregar ícones
@@ -114,11 +116,13 @@ center_rectangle()
 # noinspection PyTypeChecker
 canvas.bind("<Configure>", center_rectangle)
 
+# Função para carregar a imagem
 def open_file():
-    global img, img_colors, img_tk, canvas_image, zoom_level, original_img, backup_img
+    global img, img_colors, img_tk, canvas_image, zoom_level, original_img, backup_img, img_file_path
     filepath = filedialog.askopenfilename(filetypes=[("Image Files", "*.png;*.jpg;*.jpeg")])
     if filepath:
         img = Image.open(filepath)
+        img_file_path = filepath  # Adicionar o caminho do arquivo à variável global
         img = img.convert("RGBA")  # Usar RGBA para suportar transparência
         original_img = img.copy()  # Salvar a imagem original
         backup_img = img.copy()  # Criar um backup da imagem original
@@ -127,6 +131,7 @@ def open_file():
         img_tk = ImageTk.PhotoImage(img)
         canvas_image = canvas.create_image(canvas.winfo_width()/2, canvas.winfo_height()/2, image=img_tk)  # Centralizar a imagem no Canvas
         zoom_level = 1.0
+        show_image_info(img_file_path)  # Atualizar as informações da imagem no rodapé
         print("Image loaded successfully")
 
 def update_image():
@@ -258,6 +263,17 @@ def change_rectangle_color():
 def center_image():
     # noinspection PyTypeChecker
     canvas.coords(canvas_image, canvas.coords(rect)[0] + 350, canvas.coords(rect)[1] + 250)
+
+# Função para exibir as informações da imagem no rodapé
+def show_image_info(file_path):
+    if img is None:
+        return
+
+
+
+# Adicionar o Label no rodapé da janela principal
+footer_label = Label(root, text="", bg="#414141", fg="white", anchor="w")
+footer_label.pack(side="bottom", fill="x")
 
 # Criando a barra de menu
 menu_bar = Menu(root)
