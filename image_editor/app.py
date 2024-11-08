@@ -93,11 +93,16 @@ canvas = tk.Canvas(root, bg="#323232", highlightthickness=0)
 canvas.pack(expand=True, fill="both")
 
 # Função para centralizar o retângulo
-def center_rectangle():
+def center_rectangle(event=None):
     canvas_width = canvas.winfo_width()
     canvas_height = canvas.winfo_height()
     rect_size = (700, 500)
-    canvas.coords(rect, (canvas_width/2 - rect_size[0]/2, canvas_height/2 - rect_size[1]/2, canvas_width/2 + rect_size[0]/2, canvas_height/2 + rect_size[1]/2))
+    # Ajusta a posição do retângulo
+    canvas.coords(rect, (canvas_width / 2 - rect_size[0] / 2, canvas_height / 2 - rect_size[1] / 2,
+                         canvas_width / 2 + rect_size[0] / 2, canvas_height / 2 + rect_size[1] / 2))
+
+# Vinculando o redimensionamento da janela à função de centralização
+canvas.bind("<Configure>", center_rectangle)
 
 # Desenhando um retângulo branco no Canvas para representar a área da imagem
 rect = canvas.create_rectangle(0, 0, 700, 500, outline="white", width=2, fill="white")
