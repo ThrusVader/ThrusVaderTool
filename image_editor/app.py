@@ -43,6 +43,8 @@ root.iconphoto(False, logo_image)
 side_menu = tk.Frame(root, width=50, bg="#414141")
 side_menu.pack(side="left", fill="y")
 
+
+
 # Funções de Zoom In e Zoom Out
 def zoom_in():
     global img, img_tk, canvas_image, zoom_level
@@ -287,6 +289,59 @@ menu_bar.add_cascade(label="Options", menu=options_menu)
 
 # Configurando a barra de menu na janela
 root.config(menu=menu_bar)
+
+# Alterando a cor da barra de título
+root.configure(bg="#414141")  # Cor de fundo da janela principal
+root.title("ThrusVader Tool 1.0 - TVT")  # Atualizar o título
+
+# Função para o efeito de hover no menu
+# Função para o efeito de hover no menu e submenu
+def on_menu_enter(event):
+    event.widget.config(bg="#555555")  # Cor de fundo mais clara ao passar o mouse
+
+def on_menu_leave(event):
+    event.widget.config(bg="#414141")  # Cor de fundo original ao sair com o mouse
+
+# Criando a barra de menu
+menu_bar = Menu(root, bg="#414141", activebackground="#555555")  # Cor de fundo do menu e a cor ativa
+
+# Criando o menu 'File'
+file_menu = Menu(menu_bar, tearoff=0, bg="#414141", fg="white")
+file_menu.add_command(label="Open", command=open_file, activebackground="#555555", activeforeground="white")
+file_menu.add_command(label="Save", command=save_file, activebackground="#555555", activeforeground="white")
+file_menu.add_command(label="Save As", command=save_as, activebackground="#555555", activeforeground="white")
+file_menu.add_separator()  # Linha separadora
+file_menu.add_command(label="Exit", command=exit_application, activebackground="#555555", activeforeground="white")
+menu_bar.add_cascade(label="File", menu=file_menu)
+
+# Criando o menu 'Options'
+options_menu = Menu(menu_bar, tearoff=0, bg="#414141", fg="white")
+
+# Criando o submenu 'Image'
+image_submenu = Menu(options_menu, tearoff=0, bg="#414141", fg="white")
+image_submenu.add_command(label="Adjust Brightness", command=adjust_brightness, activebackground="#555555", activeforeground="white")
+image_submenu.add_command(label="Adjust Hue and Saturation", command=adjust_hue_saturation, activebackground="#555555", activeforeground="white")
+image_submenu.add_command(label="Color Table", command=color_table, activebackground="#555555", activeforeground="white")
+image_submenu.add_command(label="Change Background Color", command=change_rectangle_color, activebackground="#555555", activeforeground="white")
+
+# Adicionando o submenu 'Image' ao menu 'Options'
+options_menu.add_cascade(label="Image", menu=image_submenu)
+
+# Adicionando o menu 'Options' à barra de menu
+menu_bar.add_cascade(label="Options", menu=options_menu)
+
+# Configurando a barra de menu na janela
+root.config(menu=menu_bar)
+
+# Aplicando o efeito hover nas opções do menu principal
+for menu_item in menu_bar.winfo_children():
+    menu_item.bind("<Enter>", on_menu_enter)  # Ao passar o mouse, mudar a cor de fundo
+    menu_item.bind("<Leave>", on_menu_leave)  # Ao sair com o mouse, voltar à cor original
+
+# Aplicando o efeito hover nas opções do submenu "Image"
+for submenu_item in image_submenu.winfo_children():
+    submenu_item.bind("<Enter>", on_menu_enter)  # Ao passar o mouse, mudar a cor de fundo
+    submenu_item.bind("<Leave>", on_menu_leave)  # Ao sair com o mouse, voltar à cor original
 
 # Iniciando a aplicação
 root.mainloop()
